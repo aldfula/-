@@ -1,0 +1,187 @@
+
+
+import copy
+from encodings import mac_turkish
+
+#소행렬 구하기
+def minormtx(mtx,n,i,j):
+    return [row[:j] + row[j + 1:] for row in (mtx[:i] + mtx[i + 1:])]
+
+
+
+
+#행렬식 계산
+def determinant(mtx,n):
+    if n == 1:
+        return mtx[0][0]
+    if n == 2:
+        return mtx[1][1] * mtx[0][0] - mtx[1][0] * mtx[0][1]
+
+    dtmt = 0
+
+    for c in range(n):
+        dtmt += mtx[0][c] * (-1) ** c * determinant(minormtx(mtx,n,0,c), n - 1)
+    return dtmt
+
+#행렬식 값 확인 및 역행렬의 존재 여부
+def checkdeterminant(mtx, n):
+    dtmt = determinant(mtx,n)
+    if abs(dtmt) < 1e-10:
+        print('오류 : 행렬식 값이 0입니다.')
+        print('역행렬을 구할 수 없습니다.(행렬식)')
+        return False
+    return True
+
+#여행렬 구하기
+def cofactor_mtx(mtx, n):
+    cofactor_mtx = []
+    for i in range(n):
+        cofactor_row = []
+        for j in range(n):
+            cofactor_row.append((-1) ** (i + j) * determinant(minormtx(mtx,n,i,j), n - 1))
+        cofactor_mtx.append(cofactor_row)
+    return cofactor_mtx
+
+#전치행렬 구하기
+def transpose_mtx(mtx, n):
+    tp_mtx =[]
+    for j in range(n):
+        lst = []
+        for i in range(n):
+            lst.append(mtx[i][j])
+        tp_mtx.append(lst)
+    return tp_mtx
+
+def getmtx_inverse(mtx, n):
+    dtmt = determinant(mtx, n) #행렬식 값
+    if n == 1:
+        return [1.0 / mtx[0][0]]
+    if n == 2:
+        return [[mtx[1][1] / dtmt, -1 * mtx[0][1] / dtmt],
+                [-1 * mtx[1][0] / dtmt , mtx[0][0] / dtmt]]
+
+    adjoint = transpose_mtx(cofactor_mtx(mtx, n), n) #여행렬의 전치행렬
+    
+    for i in range(n):
+        for j in range(n):
+            adjoint[i][j] = adjoint[i][j] / dtmt
+
+    return adjoint
+
+#가우스 조던 소거법을 이용한 역행렬 계산
+def GJE(mtx, n):
+    #단위행렬을 주어진 행렬에 붙이기
+    mtx_in = copy.deepcopy(mtx) #깊은 복사로 원본 변경 방지
+    for i in range(n):
+        for j in range(n):
+            if i == j:
+                mtx_in[i].append(1)
+            else:
+                mtx_in[i].append(0)
+
+    #가우스 조던 소거법 진행
+    #열에서 절댓값이 가장 큰 원소의 행과 교환(나눌 떄 오차 최소화를 위해서)
+    for i in range(n):
+        high_row = i
+        for k in range(i + 1, n):
+            if abs(mtx_in[k][i]) > abs(mtx_in[high_row][i]):
+                high_row = k
+
+        mtx_in[i], mtx_in[high_row] = mtx_in[high_row], mtx_in[i] #행교환
+
+        if abs(mtx_in[i][i]) < 1e-10: #수치 오차 반영
+            return None #예외처리를 위한 None 리턴
+
+        divid = mtx_in[i][i] #주대각 성분 1로 만드는 과정
+        for j in range(2 * n):
+            mtx_in[i][j] /= divid 
+
+        #주대각 성분의 열에서 주대각 성분을 제외하고 전부 0으로 만드는 과정
+        for k in range(n):
+            if k != i: #주대각 성분 제외
+                factor = mtx_in[k][i] #해당 열의 원소
+
+                for j in range(2 * n):
+                    mtx_in[k][j] -= factor * mtx_in[i][j] #행연산을 통해 0으로 만듦
+
+    #역행렬만 반환하기
+    mtx_inverse = []
+    for i in range(n):
+        mtx_inverse.append(mtx_in[i][n:])
+    return mtx_inverse
+
+
+#두 방법을 이용해 구한 행렬들 비교
+def compare(mtx_dtmt, mtx_gje, n):
+    tolerance = 1e-10
+    for i in range(n):
+        for j in range(n):
+            if abs(mtx_dtmt[i][j] - mtx_gje[i][j]) < tolerance:
+                mtx_gje[i][j] = mtx_dtmt[i][j]
+                continue
+            else:
+                print("두 방법으로 계산한 역행렬이 일치하지 않습니다.\n")
+                return None
+    print("두 방법으로 계산한 역행렬이 일치합니다.\n")
+    return None
+
+
+
+
+
+
+#행렬 출력하기
+def matrixout(mtx, n):
+    for i in range(n):
+        for j in range(n):
+            print(str(mtx[i][j]), end = " ")
+        print("\n")
+
+
+
+#실행부
+def main():
+    try:
+        n = int(input("N의 값을 입력하세요 :"))
+        if n <= 0:
+            print("N의 값은 양수여야 합니다.\n")
+            return
+        mtx =[[0 for col in range(n)] for row in range(n)]
+        print(f"{n}*{n} 정방행렬 A를 입력하세요(각 열을 공백으로 구분하여 한 행씩 입력) :")
+        for i in range(n):
+            while True:
+                lst = input().split()
+                lst = list(map(int, lst))
+                if len(lst) != n:
+                    print(f"입력 오류 : 정확히 {n}개의 값을 입력해주세요!\n")
+                    continue
+                mtx[i] = lst
+                break
+        if checkdeterminant(mtx, n) and (GJE(mtx, n) != None): #역행렬의 존재 여부 확인
+            print("해당 행렬의 행렬식을 통해 구한 역행렬은 다음과 같습니다: \n")
+            result_determinant = getmtx_inverse(mtx, n) #행렬식으로 계산한 역행렬
+            matrixout(result_determinant, n)
+
+            print("가우스 - 조던 소거법을 통해 구한 역행렬은 다음과 같습니다 \n")
+            result_GLE = GJE(mtx, n)
+            matrixout(result_GLE, n)
+        
+            print("두 방법을 통해 구한 역행렬 일치 결과 : \n")
+            compare(result_determinant, result_GLE, n)
+
+        else:
+            print("역행렬이 존재하지 않습니다.(가우스 - 조던)")
+        
+
+
+
+        
+    except ValueError:
+        print("입력오류 : 정수를 입력해주세요.\n")
+    except Exception as e:
+        print(f"예상치 못한 오류가 발생했습니다 : {e}\n")
+
+
+        
+if __name__ == "__main__":
+    main()
