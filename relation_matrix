@@ -1,0 +1,139 @@
+from pickle import FALSE
+
+
+n = 5 #size
+
+#step 2
+def RR(matrix): #reflexive relation
+	for i in range(n):
+		if matrix[i][i] != 1:
+			return False;
+	return True;
+
+def SR(matrix): #symmetric relation
+	for i in range(n):
+		for j in range(n):
+			if matrix[i][j] != matrix[j][i]:
+				return False;
+	return True;
+
+def TR(matrix): #transitive relation
+	for i in range(n):
+		for j in range(n):
+			for k in range(n):
+				if matrix[i][j] == 1 and matrix[j][k] == 1:
+					if matrix[i][k] != 1:
+						return False
+	return True
+
+
+def ER(matrix): #equivalence relation
+	if (RR(matrix) and SR(matrix) and TR(matrix)):
+		print("이 관계 행렬은 동치관계입니다.")
+		return True
+	else:
+		print("이 관계 행렬은 동치관계가 아닙니다.")
+		return False
+
+#step 3
+def EC(matrix): #equivalence class
+	
+	print("동치류 :")
+	for i in range(n):
+		cnt = 1
+		print(f"[{i + 1}] : " ,end ="")
+		print(" {", end="")
+		for j in range(n):
+			if matrix[i][j] == 1:
+				if cnt < sum(matrix[i]):
+					print(f" {j+ 1},", end="")
+					cnt += 1
+				else:
+					print(f" {j+ 1}", end="")
+		print(" }");
+
+#step 4
+def RC(matrix): #reflexive closure
+	if not RR(matrix):
+		print("반사폐포 변환 전 관계행렬 : ")
+		print_matrix(matrix)
+		for i in range(n):
+			for j in range(n):
+				if i == j and matrix[i][j] != 1:
+					matrix[i][i] = 1
+		print("반사폐포 변환 후 관계행렬 : ")
+		print_matrix(matrix)
+		print()
+
+	return matrix
+
+def SC(matrix): #symmetric closure
+	if not SR(matrix):
+		print("대칭폐포 변환 전 관계행렬 : ")
+		print_matrix(matrix)
+		for i in range(n):
+			for j in range(n):
+				if matrix[i][j] != matrix[j][i]:
+					matrix[i][j] = 1
+		
+		print("대칭폐포 변환 후 관계행렬 : ")
+		print_matrix(matrix)
+		print()
+
+	return matrix
+		
+
+def TC(matrix): #transitive closure
+	if not TR(matrix):
+		print("추이폐포 변환 전 관계행렬 : ")
+		print_matrix(matrix)
+		for i in range(n):
+			for j in range(n):
+				for k in range(n):
+					if matrix[i][j] == 1 and matrix[j][k] == 1:
+						if matrix[i][k] != 1:
+							matrix[i][k] = 1
+		print("추이폐포 변환 후 관계행렬 : ")
+		print_matrix(matrix)
+		print()
+		
+	return matrix
+
+def closure_result(matrix): #step 4
+	if ER(matrix):
+		EC(matrix)
+		return 0
+	print()
+	matrix = RC(matrix)
+	if ER(matrix):
+		EC(matrix)
+		return 0
+	print()
+	matrix = SC(matrix)
+	if ER(matrix):
+		EC(matrix)
+		return 0
+	print()
+	matrix = TC(matrix)
+	EC(matrix)
+	return 0
+
+
+
+def print_matrix(matrix): #추가기능
+	for i in range(n):
+		for j in range(n):
+			print(matrix[i][j], end = " ")
+		print()
+	return 0
+
+if __name__ == "__main__":
+	matrix = []
+	for i in range(n):
+		row = list(map(int, input().split()))
+		matrix.append(row) #step 1
+
+
+	closure_result(matrix)
+
+
